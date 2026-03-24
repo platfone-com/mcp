@@ -18,7 +18,7 @@ An [MCP (Model Context Protocol)](https://modelcontextprotocol.io) server that e
 ## Install & Build
 
 ```bash
-git clone <repo-url> && cd platfone-mcp
+git clone https://github.com/platfone-com/mcp.git && cd mcp
 npm install
 npm run build
 ```
