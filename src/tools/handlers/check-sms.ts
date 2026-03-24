@@ -1,0 +1,70 @@
+import { z } from 'zod'
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
+import { PlatfoneClient } from '../../platfone/client.ts'
+import { formatError, formatSmsReceived, humanReadableExpiry } from '../helpers.ts'
+
+export function registerCheckSms(server: McpServer, client: PlatfoneClient) {
+  server.registerTool(
+    'check_sms',
+    {
+      title: 'Check SMS',
+      description:
+        'Retrieve the current state of a Platfone activation: SMS text, parsed code, status, and expiration. Poll at 5-second intervals until sms_status is "smsReceived" or expire_at is exceeded.',
+      inputSchema: {
+        activation_id: z.string().describe('Activation ID returned by order_number.')
+      },
+      annotations: {
+        title: 'Check SMS',
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false
+      }
+    },
+    async ({ activation_id }) => {
+      try {
+        const activation = await client.getActivation(activation_id)
+
+        if (activation.sms_status === 'smsReceived' || activation.sms_status === 'retryReceived') {
+          return { content: [{ type: 'text', text: formatSmsReceived(activation) }] }
+        }
+
+        if (activation.activation_status === 'expired') {
+          return {
+            content: [{ type: 'text', text: `⏰ Expired — no SMS received. Use order_number for a new number.` }],
+            isError: true
+          }
+        }
+        if (activation.activation_status === 'canceled') {
+          return {
+            content: [{ type: 'text', text: `❌ Canceled — no SMS will arrive. Use order_number for a new number.` }],
+            isError: true
+          }
+        }
+        if (activation.activation_status === 'finalized') {
+          return {
+            content: [{ type: 'text', text: `✔️ Finalized. Code: ${activation.sms_code ?? '(unavailable)'}` }]
+          }
+        }
+
+        const nowSec = Math.floor(Date.now() / 1000)
+        const canCancel = activation.cancelable_after != null && nowSec >= activation.cancelable_after
+
+        const lines = [
+          `⏳ Waiting for SMS…`,
+          `📱 +${activation.phone} | 🆔 ${activation.activation_id}`,
+          `⏰ Expires: ${humanReadableExpiry(activation.expire_at)}`
+        ]
+
+        if (canCancel) {
+          lines.push(`🚫 Can cancel now via cancel_activation.`)
+        }
+
+        return { content: [{ type: 'text', text: lines.join('\n') }] }
+      } catch (err) {
+        return formatError(err)
+      }
+    }
+  )
+}
+

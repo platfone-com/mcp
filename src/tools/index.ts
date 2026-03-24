@@ -1,0 +1,6 @@
+export { registerListCountries } from './handlers/list-countries.ts'
+export { registerListServices } from './handlers/list-services.ts'
+export { registerOrderNumber } from './handlers/order-number.ts'
+export { registerCheckSms } from './handlers/check-sms.ts'
+export { registerCancelActivation } from './handlers/cancel-activation.ts'
+export { registerRetryActivation } from './handlers/retry-activation.ts'
