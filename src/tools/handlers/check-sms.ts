@@ -9,7 +9,7 @@ export function registerCheckSms(server: McpServer, client: PlatfoneClient) {
     {
       title: 'Check SMS',
       description:
-        'Retrieve the current state of a Platfone activation: SMS text, parsed code, status, and expiration. Poll at 5-second intervals until sms_status is "smsReceived" or expire_at is exceeded.',
+        'Retrieve the current state of a Platfone activation: SMS text, parsed code, status, and expiration. Can be used to poll periodically or check once on demand.',
       inputSchema: {
         activation_id: z.string().describe('Activation ID returned by order_number.')
       },

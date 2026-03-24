@@ -74,7 +74,7 @@ export function registerOrderNumber(server: McpServer, client: PlatfoneClient, c
           `📱 +${activation.phone} | 🆔 ${activation.activation_id}`,
           `💰 $${(activation.price / 100).toFixed(2)} | ⏰ ${humanReadableExpiry(activation.expire_at)}`,
           ``,
-          `Poll check_sms every 5s until sms_status is "smsReceived" or expired.`
+          `Use check_sms to poll for SMS or check once on demand.`
         ].join('\n')
 
         return { content: [{ type: 'text', text }] }
