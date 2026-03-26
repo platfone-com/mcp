@@ -1,4 +1,7 @@
+.devcontainer
+.devcontainer/
 node_modules/
 dist/
 .env
 .idea
+.npmrc
