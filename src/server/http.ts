@@ -10,7 +10,10 @@ export async function startHttp(port: number) {
   const app = express()
   app.use(express.json())
 
-  const sessions = new Map<string, { transport: StreamableHTTPServerTransport; server: McpServer; lastActivity: number }>()
+  const sessions = new Map<
+    string,
+    { transport: StreamableHTTPServerTransport; server: McpServer; lastActivity: number }
+  >()
 
   app.post('/mcp', async (req, res) => {
     const apiKey = (req.headers['x-api-key'] as string) || process.env.PLATFONE_API_KEY
@@ -36,7 +39,7 @@ export async function startHttp(port: number) {
         sessions.set(id, { transport, server, lastActivity: Date.now() })
         server.connect(transport)
 
-        catalog.warmUp().catch(() => { })
+        catalog.warmUp().catch(() => {})
       }
     })
 
@@ -78,10 +81,9 @@ export async function startHttp(port: number) {
         sessions.delete(id)
       }
     }
-  }, 60_000)
+  }, 60_000).unref()
 
   app.listen(port, () => {
     console.error(`Platfone MCP server running on http://localhost:${port}/mcp`)
   })
 }
-

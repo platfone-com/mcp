@@ -31,4 +31,3 @@ export function registerCancelActivation(server: McpServer, client: PlatfoneClie
     }
   )
 }
-

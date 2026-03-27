@@ -67,4 +67,3 @@ export function registerCheckSms(server: McpServer, client: PlatfoneClient) {
     }
   )
 }
-

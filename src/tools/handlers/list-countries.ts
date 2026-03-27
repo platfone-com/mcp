@@ -32,4 +32,3 @@ export function registerListCountries(server: McpServer, catalog: CatalogCache) 
     }
   )
 }
-

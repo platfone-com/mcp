@@ -41,4 +41,3 @@ export function registerRetryActivation(server: McpServer, client: PlatfoneClien
     }
   )
 }
-

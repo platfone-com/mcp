@@ -24,7 +24,8 @@
     "dev:http": "tsx src/index.ts --transport=http --port=3000",
     "start": "node dist/index.js",
     "start:http": "node dist/index.js --transport=http",
-    "format": "prettier --write \"src/**/*.ts\""
+    "format": "prettier --write \"src/**/*.ts\"",
+    "format:check": "prettier --check \"src/**/*.ts\""
   },
   "keywords": [
     "mcp",

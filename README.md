@@ -76,7 +76,7 @@ Read the full [Development Guide](docs/DEVELOPMENT.md) for setup instructions an
 | `NoNumbersAvailableException` | Try a different country or service                                          |
 | `TooManyRequestsException`    | Rate limited — wait and retry                                               |
 | `MaxPriceExceededException`   | Retry `order_number` with the suggested `max_price` and returned `order_id` |
-| `TooManyActivationsException` | Max concurrent active activations reached — cancel or wait for expiry                       |
+| `TooManyActivationsException` | Max concurrent active activations reached — cancel or wait for expiry       |
 
 ## License
 

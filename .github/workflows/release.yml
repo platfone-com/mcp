@@ -26,7 +26,7 @@ jobs:
       - name: Verify tag exists and matches v* pattern
         run: |
           TAG="${{ inputs.tag }}"
-          if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+ ]]; then
+          if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             echo "::error::Tag '$TAG' does not match the expected pattern v<major>.<minor>.<patch>"
             exit 1
           fi
