@@ -10,5 +10,6 @@ Initial public release.
 - Human-readable names accepted for countries and services
 - Idle HTTP session cleanup (30-minute TTL)
 - Set MCP server version from `package.json`
+- Docker image published to GHCR (`ghcr.io/platfone-com/mcp`)
 - Documentation for installation, development, and security policy
-- GitHub Actions for npm publish
+- GitHub Actions for npm publish and Docker image build
