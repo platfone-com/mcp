@@ -32,4 +32,3 @@ export function registerListServices(server: McpServer, catalog: CatalogCache) {
     }
   )
 }
-

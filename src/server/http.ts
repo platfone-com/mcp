@@ -4,11 +4,16 @@ import express from 'express'
 import { PlatfoneClient } from '../platfone/client.ts'
 import { createMcpServer } from './setup.ts'
 
+const SESSION_TTL_MS = 30 * 60 * 1000 // 30 minutes
+
 export async function startHttp(port: number) {
   const app = express()
   app.use(express.json())
 
-  const sessions = new Map<string, { transport: StreamableHTTPServerTransport; server: McpServer }>()
+  const sessions = new Map<
+    string,
+    { transport: StreamableHTTPServerTransport; server: McpServer; lastActivity: number }
+  >()
 
   app.post('/mcp', async (req, res) => {
     const apiKey = (req.headers['x-api-key'] as string) || process.env.PLATFONE_API_KEY
@@ -21,6 +26,7 @@ export async function startHttp(port: number) {
 
     if (sessionId && sessions.has(sessionId)) {
       const session = sessions.get(sessionId)!
+      session.lastActivity = Date.now()
       await session.transport.handleRequest(req, res, req.body)
       return
     }
@@ -30,7 +36,7 @@ export async function startHttp(port: number) {
       onsessioninitialized: (id) => {
         const client = new PlatfoneClient({ apiKey, baseUrl: process.env.PLATFONE_API_URL })
         const { server, catalog } = createMcpServer(client)
-        sessions.set(id, { transport, server })
+        sessions.set(id, { transport, server, lastActivity: Date.now() })
         server.connect(transport)
 
         catalog.warmUp().catch(() => {})
@@ -52,6 +58,7 @@ export async function startHttp(port: number) {
       return
     }
     const session = sessions.get(sessionId)!
+    session.lastActivity = Date.now()
     await session.transport.handleRequest(req, res)
   })
 
@@ -66,8 +73,17 @@ export async function startHttp(port: number) {
     sessions.delete(sessionId)
   })
 
+  setInterval(() => {
+    const now = Date.now()
+    for (const [id, session] of sessions) {
+      if (now - session.lastActivity > SESSION_TTL_MS) {
+        session.transport.close()
+        sessions.delete(id)
+      }
+    }
+  }, 60_000).unref()
+
   app.listen(port, () => {
     console.error(`Platfone MCP server running on http://localhost:${port}/mcp`)
   })
 }
-

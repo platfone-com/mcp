@@ -47,7 +47,6 @@ export function formatSmsReceived(activation: {
   phone: string
   activation_id: string
 }): string {
-
   const lines = [
     `✅ SMS received!`,
     `📋 Code: ${activation.sms_code ?? '(no code parsed)'}`,
@@ -57,4 +56,3 @@ export function formatSmsReceived(activation: {
 
   return lines.join('\n')
 }
-

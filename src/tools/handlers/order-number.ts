@@ -95,4 +95,3 @@ export function registerOrderNumber(server: McpServer, client: PlatfoneClient, c
     }
   )
 }
-

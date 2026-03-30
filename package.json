@@ -1,5 +1,5 @@
 {
-  "name": "platfone-mcp",
+  "name": "@platfone/mcp",
   "version": "1.0.0",
   "description": "MCP server for Platfone SMS Activation API",
   "type": "module",
@@ -7,13 +7,25 @@
     "platfone-mcp": "./dist/index.js"
   },
   "main": "./dist/index.js",
+  "files": [
+    "dist"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/platfone-com/mcp.git"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
   "scripts": {
     "build": "tsc",
     "dev:stdio": "tsx src/index.ts --transport=stdio",
     "dev:http": "tsx src/index.ts --transport=http --port=3000",
     "start": "node dist/index.js",
     "start:http": "node dist/index.js --transport=http",
-    "format": "prettier --write \"src/**/*.ts\""
+    "format": "prettier --write \"src/**/*.ts\"",
+    "format:check": "prettier --check \"src/**/*.ts\""
   },
   "keywords": [
     "mcp",
@@ -22,6 +34,11 @@
     "activation"
   ],
   "license": "MIT",
+  "author": "Platfone <support@platfone.com> (https://platfone.com)",
+  "homepage": "https://github.com/platfone-com/mcp#readme",
+  "engines": {
+    "node": ">=18"
+  },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.27.1",
     "dotenv": "^17.3.1",
