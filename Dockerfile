@@ -20,13 +20,12 @@ LABEL org.opencontainers.image.licenses="MIT"
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-RUN npm ci --omit=dev && npm cache clean --force
+RUN npm ci --omit=dev --ignore-scripts && npm cache clean --force
 
 COPY --from=build /app/dist/ dist/
 
 # Default: stdio transport. Override CMD for HTTP:
 #   docker run -p 3000:3000 -e PLATFONE_API_KEY=… <image> node dist/index.js --transport=http
-EXPOSE 3000
 
 USER node
 
