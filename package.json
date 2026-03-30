@@ -1,6 +1,6 @@
 {
   "name": "@platfone/mcp",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "MCP server for Platfone SMS Activation API",
   "type": "module",
   "bin": {
