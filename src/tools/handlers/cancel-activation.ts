@@ -11,7 +11,7 @@ export function registerCancelActivation(server: McpServer, client: PlatfoneClie
       description:
         'Cancel a Platfone activation and release the phone number. Allowed when activation_status is "active", sms_status is "smsRequested", and the cancelable_after timestamp has passed. If cancelable_after is null, cancellation is not supported.',
       inputSchema: {
-        activation_id: z.string().describe('Activation ID to cancel.')
+        activation_id: z.string().max(256).describe('Activation ID to cancel.')
       },
       annotations: {
         title: 'Cancel Activation',

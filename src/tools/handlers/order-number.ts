@@ -21,8 +21,8 @@ export function registerOrderNumber(server: McpServer, client: PlatfoneClient, c
       description:
         'Rent a virtual phone number via the Platfone API for the given country and service category. Returns phone number, activation_id, resolved country & service names, price, expiry time, retriable flag, and whether/when the activation can be canceled. Accepts country and service as human-readable names or IDs — names are auto-resolved from the cached catalog. Use check_price first to verify cost and availability. Use check_sms with the activation_id to poll for incoming SMS. Only received messages are billed. IMPORTANT: Only call this tool once per order. Never call it multiple times in parallel — duplicate orders will be rejected.',
       inputSchema: {
-        country: z.string().describe("Country name or ID (e.g. 'Israel', 'us', 'United Kingdom')."),
-        service: z.string().describe('Service category name or ID from the Platfone catalog.'),
+        country: z.string().max(256).describe("Country name or ID (e.g. 'us', 'United Kingdom')."),
+        service: z.string().max(256).describe('Service category name or ID from the Platfone catalog.'),
         max_price: z
           .number()
           .int()
