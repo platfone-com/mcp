@@ -31,7 +31,7 @@ export function registerRetryActivation(server: McpServer, client: PlatfoneClien
           `📱 +${activation.phone} | 🆔 ${activation.activation_id}`,
           `⏰ Expires: ${humanReadableExpiry(activation.expire_at)}`,
           ``,
-          `Poll check_sms every 5s until sms_status is "retryReceived" or expired.`
+          `Use check_sms to poll for the new SMS or check once on demand.`
         ].join('\n')
 
         return { content: [{ type: 'text', text }] }
@@ -41,4 +41,3 @@ export function registerRetryActivation(server: McpServer, client: PlatfoneClien
     }
   )
 }
-

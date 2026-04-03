@@ -41,8 +41,30 @@ export interface NewActivationRequest {
   quality_factor?: number
 }
 
+export interface PriceInfo {
+  price: {
+    min: number
+    max: number
+    suggested: number
+  }
+  quality: {
+    avg: number
+  }
+  count: number
+}
+
+export interface Balance {
+  total: number
+  reserved: number
+}
+
 export interface SuccessResponse {
   result: 'success'
+}
+
+export interface CatalogResponse<T> {
+  data: T
+  etag: string | null
 }
 
 export class PlatfoneApiError extends Error {
