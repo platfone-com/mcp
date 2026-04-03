@@ -16,7 +16,7 @@ export async function startStdio() {
 
   const { server, catalog } = createMcpServer(client)
 
-  catalog.warmUp().catch(() => {})
+  catalog.warmUp().catch((err) => console.error('Catalog warm-up failed:', err.message))
 
   const transport = new StdioServerTransport()
   await server.connect(transport)

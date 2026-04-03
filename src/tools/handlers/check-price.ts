@@ -16,8 +16,8 @@ export function registerCheckPrice(server: McpServer, client: PlatfoneClient, ca
       description:
         'Check pricing for a country + service pair before ordering. Returns min, max, and suggested price, average quality score, and number of available phone numbers. Use this before order_number to verify cost and availability. Accepts country and service as human-readable names or IDs.',
       inputSchema: {
-        country: z.string().describe("Country name or ID (e.g. 'us', 'United Kingdom')."),
-        service: z.string().describe('Service category name or ID from the Platfone catalog.'),
+        country: z.string().max(256).describe("Country name or ID (e.g. 'us', 'United Kingdom')."),
+        service: z.string().max(256).describe('Service category name or ID from the Platfone catalog.'),
         max_price: z
           .number()
           .int()

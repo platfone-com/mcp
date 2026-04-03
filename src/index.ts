@@ -20,8 +20,8 @@ function parseArgs() {
     }
     if (arg.startsWith('--port=')) {
       port = parseInt(arg.split('=')[1], 10)
-      if (isNaN(port)) {
-        console.error('Invalid port number.')
+      if (isNaN(port) || port < 1 || port > 65535) {
+        console.error('Invalid port number. Must be between 1 and 65535.')
         process.exit(1)
       }
     }

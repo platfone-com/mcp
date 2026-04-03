@@ -11,7 +11,7 @@ export function registerRetryActivation(server: McpServer, client: PlatfoneClien
       description:
         'Request an additional SMS on the same Platfone number. Overwrites the previous SMS data with the next message. Free of charge. Only possible when sms_status is "smsReceived" or "retryReceived", activation_status is "active", and is_retriable is true. After calling, poll check_sms every 5 seconds until sms_status becomes "retryReceived" or the activation expires.',
       inputSchema: {
-        activation_id: z.string().describe('Activation ID to retry.')
+        activation_id: z.string().max(256).describe('Activation ID to retry.')
       },
       annotations: {
         title: 'Retry Activation',
