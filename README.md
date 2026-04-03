@@ -6,8 +6,7 @@
 
 Instead of manually integrating the API, AI agents can:
 
-- Discover available countries/services
-- Order numbers autonomously
+- Order numbers autonomously by country and service name
 - Wait for SMS codes
 - Retry or cancel activations
 
@@ -16,8 +15,8 @@ All via structured tool calls — no custom backend required.
 ## Features
 
 - **Full activation lifecycle** — from ordering a number to receiving SMS
-- **Session-cached catalog** — countries and services are fetched once per session, not per call
-- **Human-friendly inputs** — use "Ukraine" or "Telegram" instead of IDs
+- **ETag-cached catalog** — countries and services are cached in-memory with 5-minute TTL and ETag-based conditional refresh — never sent to the agent
+- **Human-friendly inputs** — use "Israel" or "Telegram" instead of IDs; names are auto-resolved server-side
 - **Dual transport** — `stdio` and `http` from a single codebase
 - **API key auth** — works with your existing Platfone API key
 
@@ -35,8 +34,9 @@ PLATFONE_API_KEY=your_key npx @platfone/mcp
 
 ## Agent Guidelines
 
-- Always call `order_number` first
-- Then call `check_sms` until SMS is received or expired
+- Always call `check_price` first to verify cost and availability
+- Then call `order_number` to rent a number
+- Call `check_sms` until SMS is received or expired
 - Use `retry_activation` if no SMS arrives
 - Use `cancel_activation` to release funds if no longer needed
 
@@ -44,18 +44,22 @@ PLATFONE_API_KEY=your_key npx @platfone/mcp
 
 | Tool                | Description                                                                                               |
 | ------------------- | --------------------------------------------------------------------------------------------------------- |
-| `list_countries`    | List countries where phone numbers are available. Cached per session.                                     |
-| `list_services`     | List services (apps/platforms) for activation. Cached per session.                                        |
-| `order_number`      | Order a virtual phone number. Accepts names ("Ukraine") or IDs ("ua"). Returns `activation_id` + `phone`. |
+| `get_balance`       | Check account balance: total, reserved, and available funds.                                              |
+| `check_price`       | Check pricing and availability for a country + service pair before ordering.                              |
+| `order_number`      | Order a virtual phone number. Accepts names ("Israel") or IDs ("il"). Returns `activation_id` + `phone`. |
 | `check_sms`         | Poll activation state. Returns SMS code when received, or current status with polling instructions.       |
 | `retry_activation`  | Request another SMS on the same number. Free of charge.                                                   |
 | `cancel_activation` | Cancel an active activation before SMS is received. Refunds reserved amount.                              |
 
+> **Note:** Country and service catalogs are cached server-side and auto-resolved from human-readable names.
+> The agent never receives the full catalog — only resolved IDs or disambiguation hints.
+
 ### Typical AI Agent Flow
 
 ```
-1. order_number        (country: "Ukraine", service: "Telegram")  → returns activation_id + phone
-2. check_sms           (activation_id)                            → poll or check once for SMS
+1. check_price         (country: "Israel", service: "Telegram")  → verify cost & availability
+2. order_number        (country: "Israel", service: "Telegram")  → returns activation_id + phone
+3. check_sms           (activation_id)                            → poll or check once for SMS
 ```
 
 Optional steps:

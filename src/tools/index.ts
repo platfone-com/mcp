@@ -1,5 +1,5 @@
-export { registerListCountries } from './handlers/list-countries.ts'
-export { registerListServices } from './handlers/list-services.ts'
+export { registerGetBalance } from './handlers/get-balance.ts'
+export { registerCheckPrice } from './handlers/check-price.ts'
 export { registerOrderNumber } from './handlers/order-number.ts'
 export { registerCheckSms } from './handlers/check-sms.ts'
 export { registerCancelActivation } from './handlers/cancel-activation.ts'

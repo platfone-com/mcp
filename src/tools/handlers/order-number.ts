@@ -3,17 +3,25 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { PlatfoneClient } from '../../platfone/client.ts'
 import { CatalogCache } from '../../platfone/catalog-cache.ts'
 import { PlatfoneApiError } from '../../platfone/types.ts'
-import { formatError, humanReadableExpiry } from '../helpers.ts'
+import {
+  formatCancelability,
+  formatError,
+  humanReadableExpiry,
+  isToolError,
+  resolveCountryAndService
+} from '../helpers.ts'
 
 export function registerOrderNumber(server: McpServer, client: PlatfoneClient, catalog: CatalogCache) {
+  let orderInFlight = false
+
   server.registerTool(
     'order_number',
     {
       title: 'Order Number',
       description:
-        'Rent a virtual phone number via the Platfone API for the given country and service category. Returns a phone number and activation_id. Accepts country and service as human-readable names or IDs — names are auto-resolved from the cached catalog. Use check_sms with the activation_id to poll for incoming SMS. Only received messages are billed.',
+        'Rent a virtual phone number via the Platfone API for the given country and service category. Returns phone number, activation_id, resolved country & service names, price, expiry time, retriable flag, and whether/when the activation can be canceled. Accepts country and service as human-readable names or IDs — names are auto-resolved from the cached catalog. Use check_price first to verify cost and availability. Use check_sms with the activation_id to poll for incoming SMS. Only received messages are billed. IMPORTANT: Only call this tool once per order. Never call it multiple times in parallel — duplicate orders will be rejected.',
       inputSchema: {
-        country: z.string().describe("Country name or ID (e.g. 'Ukraine', 'us', 'United Kingdom')."),
+        country: z.string().describe("Country name or ID (e.g. 'Israel', 'us', 'United Kingdom')."),
         service: z.string().describe('Service category name or ID from the Platfone catalog.'),
         max_price: z
           .number()
@@ -38,33 +46,26 @@ export function registerOrderNumber(server: McpServer, client: PlatfoneClient, c
       }
     },
     async ({ country, service, max_price, quality_factor }) => {
-      try {
-        const resolvedCountry = await catalog.resolveCountryId(country)
-        if (!resolvedCountry) {
-          return {
-            content: [
-              {
-                type: 'text',
-                text: `❌ Country "${country}" not found. Use list_countries to see available countries.`
-              }
-            ],
-            isError: true
-          }
+      if (orderInFlight) {
+        return {
+          content: [
+            {
+              type: 'text',
+              text: '❌ An order is already in progress. Wait for it to complete before placing another. Do NOT call order_number multiple times in parallel.'
+            }
+          ],
+          isError: true
         }
+      }
 
-        const resolvedService = await catalog.resolveServiceId(service)
-        if (!resolvedService) {
-          return {
-            content: [
-              { type: 'text', text: `❌ Service "${service}" not found. Use list_services to see available services.` }
-            ],
-            isError: true
-          }
-        }
+      orderInFlight = true
+      try {
+        const resolved = await resolveCountryAndService(catalog, country, service)
+        if (isToolError(resolved)) return resolved
 
         const activation = await client.orderNumber({
-          service_id: resolvedService.service_id,
-          country_id: resolvedCountry.country_id,
+          service_id: resolved.service.service_id,
+          country_id: resolved.country.country_id,
           max_price,
           quality_factor
         })
@@ -72,7 +73,10 @@ export function registerOrderNumber(server: McpServer, client: PlatfoneClient, c
         const text = [
           `✅ Number ordered!`,
           `📱 +${activation.phone} | 🆔 ${activation.activation_id}`,
+          `🌍 ${resolved.country.name} | 🏷️ ${resolved.service.name}`,
           `💰 $${(activation.price / 100).toFixed(2)} | ⏰ ${humanReadableExpiry(activation.expire_at)}`,
+          `🔄 Retriable: ${activation.is_retriable ? 'Yes' : 'No'}`,
+          formatCancelability(activation.cancelable_after),
           ``,
           `Use check_sms to poll for SMS or check once on demand.`
         ].join('\n')
@@ -91,6 +95,8 @@ export function registerOrderNumber(server: McpServer, client: PlatfoneClient, c
           return { content: [{ type: 'text', text: lines.join('\n') }], isError: true }
         }
         return formatError(err)
+      } finally {
+        orderInFlight = false
       }
     }
   )

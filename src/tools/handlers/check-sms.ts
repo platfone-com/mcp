@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { PlatfoneClient } from '../../platfone/client.ts'
-import { formatError, formatSmsReceived, humanReadableExpiry } from '../helpers.ts'
+import { formatCancelability, formatError, formatSmsReceived, humanReadableExpiry } from '../helpers.ts'
 
 export function registerCheckSms(server: McpServer, client: PlatfoneClient) {
   server.registerTool(
@@ -47,18 +47,12 @@ export function registerCheckSms(server: McpServer, client: PlatfoneClient) {
           }
         }
 
-        const nowSec = Math.floor(Date.now() / 1000)
-        const canCancel = activation.cancelable_after != null && nowSec >= activation.cancelable_after
-
         const lines = [
           `⏳ Waiting for SMS…`,
           `📱 +${activation.phone} | 🆔 ${activation.activation_id}`,
-          `⏰ Expires: ${humanReadableExpiry(activation.expire_at)}`
+          `⏰ Expires: ${humanReadableExpiry(activation.expire_at)}`,
+          formatCancelability(activation.cancelable_after)
         ]
-
-        if (canCancel) {
-          lines.push(`🚫 Can cancel now via cancel_activation.`)
-        }
 
         return { content: [{ type: 'text', text: lines.join('\n') }] }
       } catch (err) {

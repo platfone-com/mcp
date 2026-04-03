@@ -103,11 +103,10 @@ Open: [http://localhost:6274](http://localhost:6274)
 Steps:
 
 1. Connect
-2. Call `list_countries`
-3. Call `list_services`
-4. Call `order_number`
-5. Send test SMS via [dashboard](https://platfone.com/test/app)
-6. Call `check_sms`
+2. Call `check_price` with a country and service name
+3. Call `order_number`
+4. Send test SMS via [dashboard](https://platfone.com/test/app)
+5. Call `check_sms`
 
 ---
 
@@ -183,7 +182,7 @@ curl -X POST http://localhost:3000/mcp \
   -H "Accept: application/json, text/event-stream" \
   -H "x-api-key: your_sandbox_api_key_here" \
   -H "Mcp-Session-Id: SESSION_ID_HERE" \
-  -d '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"list_countries","arguments":{}}}'
+  -d '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"check_price","arguments":{"country":"Israel","service":"Telegram"}}}'
 ```
 
 ---

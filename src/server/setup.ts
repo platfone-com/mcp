@@ -3,8 +3,8 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { PlatfoneClient } from '../platfone/client.ts'
 import { CatalogCache } from '../platfone/catalog-cache.ts'
 import {
-  registerListCountries,
-  registerListServices,
+  registerGetBalance,
+  registerCheckPrice,
   registerOrderNumber,
   registerCheckSms,
   registerCancelActivation,
@@ -26,8 +26,8 @@ export function createMcpServer(client: PlatfoneClient): { server: McpServer; ca
 
   const catalog = new CatalogCache(client)
 
-  registerListCountries(server, catalog)
-  registerListServices(server, catalog)
+  registerGetBalance(server, client)
+  registerCheckPrice(server, client, catalog)
   registerOrderNumber(server, client, catalog)
   registerCheckSms(server, client)
   registerCancelActivation(server, client)

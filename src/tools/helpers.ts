@@ -1,4 +1,62 @@
 import { PlatfoneApiError } from '../platfone/types.ts'
+import { CatalogCache } from '../platfone/catalog-cache.ts'
+
+type ToolError = { content: [{ type: 'text'; text: string }]; isError: true }
+type Resolved = { country: { country_id: string; name: string }; service: { service_id: string; name: string } }
+
+export async function resolveCountryAndService(
+  catalog: CatalogCache,
+  country: string,
+  service: string
+): Promise<Resolved | ToolError> {
+  const resolvedCountry = await catalog.resolveCountryId(country)
+  if (!resolvedCountry) {
+    return {
+      content: [
+        { type: 'text', text: `❌ Country "${country}" not found.` }
+      ],
+      isError: true
+    }
+  }
+  if ('ambiguous' in resolvedCountry) {
+    return {
+      content: [
+        {
+          type: 'text',
+          text: `❌ "${country}" is ambiguous — matches multiple countries:\n${resolvedCountry.ambiguous.map((n) => `  • ${n}`).join('\n')}\nPlease specify the full country name or country_id.`
+        }
+      ],
+      isError: true
+    }
+  }
+
+  const resolvedService = await catalog.resolveServiceId(service)
+  if (!resolvedService) {
+    return {
+      content: [
+        { type: 'text', text: `❌ Service "${service}" not found.` }
+      ],
+      isError: true
+    }
+  }
+  if ('ambiguous' in resolvedService) {
+    return {
+      content: [
+        {
+          type: 'text',
+          text: `❌ "${service}" is ambiguous — matches multiple services:\n${resolvedService.ambiguous.map((n) => `  • ${n}`).join('\n')}\nPlease specify the full service name or service_id.`
+        }
+      ],
+      isError: true
+    }
+  }
+
+  return { country: resolvedCountry, service: resolvedService }
+}
+
+export function isToolError(result: Resolved | ToolError): result is ToolError {
+  return 'isError' in result
+}
 
 export function humanReadableExpiry(unixSeconds: number): string {
   const d = new Date(unixSeconds * 1000)
@@ -39,6 +97,19 @@ export function formatError(err: unknown) {
 
   const msg = err instanceof Error ? err.message : String(err)
   return { content: [{ type: 'text' as const, text: `❌ Unexpected error: ${msg}` }], isError: true }
+}
+
+export function formatCancelability(cancelableAfter: number | null): string {
+  if (cancelableAfter == null) {
+    return `🚫 Cancelable: No (expires automatically)`
+  }
+
+  const nowSec = Math.floor(Date.now() / 1000)
+  if (nowSec >= cancelableAfter) {
+    return `🚫 Can cancel now via cancel_activation.`
+  }
+
+  return `⏳ Cancel available after ${humanReadableExpiry(cancelableAfter)}`
 }
 
 export function formatSmsReceived(activation: {
