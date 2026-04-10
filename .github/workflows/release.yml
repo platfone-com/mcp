@@ -97,7 +97,10 @@ jobs:
           cache: npm
           registry-url: https://registry.npmjs.org
 
-      - run: npm install -g npm@latest
+      # Workaround: Node 22.22.2 ships broken npm 10.9.7 (missing promise-retry).
+      # Two-step upgrade until nodejs/node#62425 is fixed.
+      - run: npm install -g npm@11.11.0 && npm install -g npm@latest
+
       - run: npm ci --ignore-scripts
 
       - uses: actions/download-artifact@v8
