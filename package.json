@@ -1,7 +1,7 @@
 {
   "name": "@platfone/mcp",
-  "version": "1.1.1",
-  "description": "MCP server for Platfone SMS Activation API",
+  "version": "1.1.2",
+  "description": "MCP server for virtual phone number verification — SMS activations for AI agents via Claude, Cursor, VS Code Copilot",
   "type": "module",
   "bin": {
     "platfone-mcp": "./dist/index.js"
@@ -29,13 +29,28 @@
   },
   "keywords": [
     "mcp",
+    "mcp-server",
+    "model-context-protocol",
     "platfone",
     "sms",
-    "activation"
+    "sms-verification",
+    "sms-activate",
+    "activation",
+    "virtual-number",
+    "virtual-phone",
+    "temp-number",
+    "phone-verification",
+    "otp",
+    "receive-sms",
+    "2fa",
+    "ai-agent",
+    "claude",
+    "cursor"
   ],
+  "mcpName": "com.platfone/mcp",
   "license": "MIT",
   "author": "Platfone <support@platfone.com> (https://platfone.com)",
-  "homepage": "https://github.com/platfone-com/mcp#readme",
+  "homepage": "https://platfone.com/docs/mcp/",
   "engines": {
     "node": ">=18"
   },
