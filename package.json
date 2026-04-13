@@ -1,5 +1,6 @@
 {
   "name": "@platfone/mcp",
+  "mcpName": "io.github.platfone-com/platfone",
   "version": "1.1.6",
   "description": "MCP server for virtual phone number verification — SMS activations for AI agents via Claude, Cursor, VS Code Copilot",
   "type": "module",
