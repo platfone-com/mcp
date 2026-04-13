@@ -1,6 +1,14 @@
 # Platfone MCP Server
 
+[![npm version](https://img.shields.io/npm/v/@platfone/mcp)](https://www.npmjs.com/package/@platfone/mcp)
+[![npm downloads](https://img.shields.io/npm/dw/@platfone/mcp)](https://www.npmjs.com/package/@platfone/mcp)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Smithery](https://smithery.ai/badge/dima-p0g6/platfone)](https://smithery.ai/server/dima-p0g6/platfone)
+
 [Platfone](https://platfone.com) provides virtual phone numbers for account verification, testing, and automation workflows. The Platfone MCP server enables AI agents to obtain temporary numbers and receive SMS messages from MCP-compatible clients like Claude, VS Code Copilot, Codex, etc.
+
+📖 [Docs](https://platfone.com/docs/mcp/) · 🔧 [Setup Guide](https://platfone.com/docs/mcp/setup/) · 🔑 [Get API Key](https://platfone.com/app/api) · 📦 [npm](https://www.npmjs.com/package/@platfone/mcp)
+
 
 ## Why MCP?
 
@@ -22,7 +30,7 @@ All via structured tool calls — no custom backend required.
 
 ## Installation
 
-See the full [Installation Guide](https://platfone.com/docs/mcp/install) for detailed instructions.
+See the full [Installation Guide](https://platfone.com/docs/mcp/setup) for detailed instructions.
 
 ### Quick Start
 
@@ -85,3 +93,5 @@ Read the full [Development Guide](docs/DEVELOPMENT.md) for setup instructions an
 ## License
 
 See [LICENSE.md](./LICENSE.md). Licensed under the MIT License.
+
+Use of the Platfone API is subject to [Terms of Service](https://platfone.com/compliance#terms) and [Privacy Policy](https://platfone.com/compliance#privacy).
