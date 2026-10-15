@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.1.9 — 2026-10-15
 
 - **Security:** HTTP sessions are now bound to the credential that initialized them. `POST`, `GET` and `DELETE` on `/mcp` require the same `x-api-key` (or the same server-key fallback); missing credentials return `401`, and mismatched credentials are handled as an unknown session without affecting the owner's session.
 - HTTP sessions now also have an absolute lifetime of 12 hours in addition to the 30-minute idle timeout, enforced on every request and by the background sweeper.
