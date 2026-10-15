@@ -185,6 +185,25 @@ curl -X POST http://localhost:3000/mcp \
   -d '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"check_price","arguments":{"country":"Israel","service":"Telegram"}}}'
 ```
 
+#### Session binding and lifetime
+
+An HTTP session is bound to the credential that initialized it: the `x-api-key` header, or the server `PLATFONE_API_KEY` fallback when no header is sent. Every `POST`, `GET` and `DELETE` on `/mcp` must present the same credential from the same source:
+
+- A request without any credential (no header and no server fallback) returns `401`.
+- A request with a different key, or switching between header key and server fallback, is treated exactly like an unknown session and never touches the existing session.
+
+Sessions expire after **30 minutes of inactivity** or **12 hours after creation**, whichever comes first. Clients must then initialize a new session.
+
+---
+
+## Automated Tests
+
+```bash
+npm test
+```
+
+Runs the HTTP transport tests against a local fake Platfone API (no network access or real API key required).
+
 ---
 
 ## End-to-End Test
