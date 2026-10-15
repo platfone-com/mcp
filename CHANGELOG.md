@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- **Security:** HTTP sessions are now bound to the credential that initialized them. `POST`, `GET` and `DELETE` on `/mcp` require the same `x-api-key` (or the same server-key fallback); missing credentials return `401`, and mismatched credentials are handled as an unknown session without affecting the owner's session.
+- HTTP sessions now also have an absolute lifetime of 12 hours in addition to the 30-minute idle timeout, enforced on every request and by the background sweeper.
+- Added `npm test` with HTTP transport session-binding tests.
+
 ## 1.1.0 — 2026-04-03
 
 - **Removed** `list_countries` and `list_services` tools — catalog is no longer exposed to the agent.
