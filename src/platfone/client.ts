@@ -15,15 +15,23 @@ const DEFAULT_BASE_URL = 'https://temp-number-api.com/api/v1'
 export interface PlatfoneClientOptions {
   apiKey: string
   baseUrl?: string
+  /** Called when the API rejects the key with 401, e.g. after it was revoked. */
+  onUnauthorized?: () => void
+}
+
+export function normalizeBaseUrl(baseUrl?: string): string {
+  return (baseUrl ?? DEFAULT_BASE_URL).replace(/\/+$/, '')
 }
 
 export class PlatfoneClient {
   private readonly apiKey: string
   private readonly baseUrl: string
+  private readonly onUnauthorized?: () => void
 
   constructor(opts: PlatfoneClientOptions) {
     this.apiKey = opts.apiKey
-    this.baseUrl = (opts.baseUrl ?? DEFAULT_BASE_URL).replace(/\/+$/, '')
+    this.baseUrl = normalizeBaseUrl(opts.baseUrl)
+    this.onUnauthorized = opts.onUnauthorized
   }
 
   async getBalance(): Promise<Balance> {
@@ -118,6 +126,8 @@ export class PlatfoneClient {
     if (res.ok) {
       return (await res.json()) as T
     }
+
+    if (res.status === 401) this.onUnauthorized?.()
 
     let body: Record<string, unknown> = {}
     try {

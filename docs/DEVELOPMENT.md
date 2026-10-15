@@ -51,6 +51,8 @@ PLATFONE_API_KEY=your_api_key_here
 | ------------------ | -------- | ------------------------------------------------------------------------------------ |
 | `PLATFONE_API_KEY` | Yes      | Your Platfone API key. For HTTP transport, can also be passed via `x-api-key` header |
 | `PLATFONE_API_URL` | No       | Override API base URL (default: `https://temp-number-api.com/api/v1`)                |
+| `MCP_CLIENT_IP_HEADER` | No   | HTTP only. Header with the real client address set by a trusted proxy (e.g. `cf-connecting-ip`). Used for the per-client session-creation limit; leave unset unless the proxy always overwrites it |
+| `MCP_METRICS_PORT` | No       | HTTP only. Serves Prometheus metrics at `http://<host>:<port>/metrics` on a separate port; keep it off the public ingress |
 
 > Configure `.env` before running the server.
 
@@ -193,6 +195,21 @@ An HTTP session is bound to the credential that initialized it: the `x-api-key` 
 - A request with a different key, or switching between header key and server fallback, is treated exactly like an unknown session and never touches the existing session.
 
 Sessions expire after **30 minutes of inactivity** or **12 hours after creation**, whichever comes first. Clients must then initialize a new session.
+
+#### Session admission
+
+A new session is created only after the API key (header or server fallback) is confirmed by the Platfone API (`GET /user/balance`). Checks apply only to `initialize` requests; traffic on established sessions is not affected.
+
+| Condition                                                        | Response |
+| ---------------------------------------------------------------- | -------- |
+| No credential                                                    | `401`    |
+| Key rejected by the Platfone API                                 | `401`    |
+| More than 30 new sessions per minute from one client address     | `429` + `Retry-After` |
+| More than 20 active sessions for one API key                     | `429`    |
+| Session pool full (5000 sessions)                                | `503`    |
+| Platfone API unavailable, slow (> 5 s) or too many checks in flight | `503` + `Retry-After` |
+
+Check results are cached for 60 seconds per key fingerprint (plaintext keys are never stored or logged). If the Platfone API later rejects a key with `401` during a tool call, every session of that key is closed.
 
 ---
 
