@@ -5,6 +5,11 @@
 - **Security:** HTTP sessions are now bound to the credential that initialized them. `POST`, `GET` and `DELETE` on `/mcp` require the same `x-api-key` (or the same server-key fallback); missing credentials return `401`, and mismatched credentials are handled as an unknown session without affecting the owner's session.
 - HTTP sessions now also have an absolute lifetime of 12 hours in addition to the 30-minute idle timeout, enforced on every request and by the background sweeper.
 - Added `npm test` with HTTP transport session-binding tests.
+- **Security:** new HTTP sessions are admitted only after the API key is verified with the Platfone API. Invalid or missing keys get `401` and never occupy the session pool or trigger catalog warm-up. Checks are timeout- and concurrency-bounded, cached per key fingerprint, and fail closed with `503` when the Platfone API is unavailable.
+- Session creation is rate limited per client address (30/min) and capped at 20 active sessions per API key; established-session traffic is not affected. Optional `MCP_CLIENT_IP_HEADER` selects a trusted proxy header for the client address.
+- Sessions are closed when the Platfone API rejects their key during a tool call (e.g. revoked key), and interrupted initializations release their slot.
+- Optional Prometheus metrics (`MCP_METRICS_PORT`): admissions by result, credential checks, active/pending sessions and session cleanup by reason.
+- **Security (dependencies):** upgraded `@modelcontextprotocol/sdk` to 1.32.1 and `express` to 4.22.3 (dev: `tsx` 4.23); the lockfile now resolves patched `fast-uri` 3.1.8, `ip-address` 10.7.4, `hono` 4.13.13, `@hono/node-server` 2.1.5, `qs` 6.16.1, `proxy-addr` 2.0.8, `body-parser` 1.20.8 and `esbuild` 0.28. `npm audit` reports no vulnerabilities.
 
 ## 1.1.0 — 2026-04-03
 

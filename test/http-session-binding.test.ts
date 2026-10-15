@@ -1,161 +1,22 @@
 import assert from 'node:assert/strict'
-import { createServer, type IncomingMessage, type Server } from 'node:http'
-import type { AddressInfo } from 'node:net'
-import { describe, it, type TestContext } from 'node:test'
-import { createHttpApp, type HttpAppOptions } from '../src/server/http.ts'
+import { describe, it } from 'node:test'
+import {
+  GARBAGE_KEY,
+  KEY_A,
+  KEY_B,
+  PROTOCOL_VERSION,
+  SERVER_KEY,
+  assertNoSecretsLogged,
+  balanceCalls,
+  balanceText,
+  deleteSession,
+  getBalance,
+  initialize,
+  openSession,
+  setup
+} from './helpers.ts'
 
-const KEY_A = 'key-account-a'
-const KEY_B = 'key-account-b'
-const SERVER_KEY = 'key-server-fallback'
-const GARBAGE_KEY = 'not-a-real-key'
-const BALANCES: Record<string, number> = { [KEY_A]: 1000, [KEY_B]: 2000, [SERVER_KEY]: 3000 }
-const PROTOCOL_VERSION = '2025-03-26'
-
-interface UpstreamCall {
-  path: string
-  apiKey: string | undefined
-}
-
-function listen(server: Server): Promise<string> {
-  return new Promise((resolve) => {
-    server.listen(0, '127.0.0.1', () => resolve(`http://127.0.0.1:${(server.address() as AddressInfo).port}`))
-  })
-}
-
-function close(server: Server): Promise<void> {
-  server.closeAllConnections()
-  return new Promise((resolve) => server.close(() => resolve()))
-}
-
-async function startUpstream() {
-  const calls: UpstreamCall[] = []
-  const server = createServer((req: IncomingMessage, res) => {
-    const apiKey = req.headers['x-api-key'] as string | undefined
-    const path = (req.url ?? '').replace(/\?.*$/, '')
-    calls.push({ path, apiKey })
-    res.setHeader('Content-Type', 'application/json')
-
-    if (!apiKey || !(apiKey in BALANCES)) {
-      res.statusCode = 401
-      res.end(JSON.stringify({ errorName: 'UnauthorizedException', errorMessage: 'Unauthorized' }))
-      return
-    }
-    if (path === '/user/balance') {
-      res.end(JSON.stringify({ total: BALANCES[apiKey], reserved: 0 }))
-      return
-    }
-    res.end('[]')
-  })
-  const url = await listen(server)
-  return { url, calls, server }
-}
-
-interface Harness {
-  mcpUrl: string
-  calls: UpstreamCall[]
-  logs: string[]
-  clock: { now: number }
-  app: ReturnType<typeof createHttpApp>
-}
-
-async function setup(t: TestContext, options: Partial<HttpAppOptions> = {}): Promise<Harness> {
-  const upstream = await startUpstream()
-  const clock = { now: 1_000_000 }
-  const app = createHttpApp({ baseUrl: upstream.url, now: () => clock.now, ...options })
-  const server = createServer(app.app)
-  const mcpUrl = `${await listen(server)}/mcp`
-
-  const logs: string[] = []
-  t.mock.method(console, 'error', (...args: unknown[]) => {
-    logs.push(args.map((a) => (a instanceof Error ? `${a.message} ${a.stack}` : String(a))).join(' '))
-  })
-
-  t.after(async () => {
-    await app.closeAllSessions()
-    await close(server)
-    await close(upstream.server)
-  })
-
-  return { mcpUrl, calls: upstream.calls, logs, clock, app }
-}
-
-function headers(apiKey?: string, sessionId?: string): Record<string, string> {
-  const h: Record<string, string> = {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json, text/event-stream'
-  }
-  if (apiKey !== undefined) h['x-api-key'] = apiKey
-  if (sessionId) {
-    h['mcp-session-id'] = sessionId
-    h['mcp-protocol-version'] = PROTOCOL_VERSION
-  }
-  return h
-}
-
-let nextId = 1
-
-async function rpc(
-  url: string,
-  apiKey: string | undefined,
-  sessionId: string | undefined,
-  method: string,
-  params = {}
-) {
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: headers(apiKey, sessionId),
-    body: JSON.stringify({ jsonrpc: '2.0', id: nextId++, method, params })
-  })
-  const text = await res.text()
-  const dataLine = text
-    .split('\n')
-    .filter((l) => l.startsWith('data: '))
-    .pop()
-  const body = dataLine ? JSON.parse(dataLine.slice(6)) : text ? JSON.parse(text) : undefined
-  return { status: res.status, body, sessionId: res.headers.get('mcp-session-id') ?? undefined }
-}
-
-async function openSession(url: string, apiKey?: string): Promise<string> {
-  const init = await rpc(url, apiKey, undefined, 'initialize', {
-    protocolVersion: PROTOCOL_VERSION,
-    capabilities: {},
-    clientInfo: { name: 'test', version: '1.0.0' }
-  })
-  assert.equal(init.status, 200)
-  assert.ok(init.sessionId)
-
-  const notified = await fetch(url, {
-    method: 'POST',
-    headers: headers(apiKey, init.sessionId),
-    body: JSON.stringify({ jsonrpc: '2.0', method: 'notifications/initialized' })
-  })
-  assert.equal(notified.status, 202)
-  return init.sessionId
-}
-
-function getBalance(url: string, apiKey: string | undefined, sessionId: string) {
-  return rpc(url, apiKey, sessionId, 'tools/call', { name: 'get_balance', arguments: {} })
-}
-
-function balanceText(result: Awaited<ReturnType<typeof getBalance>>): string {
-  return result.body?.result?.content?.[0]?.text ?? ''
-}
-
-function balanceCalls(h: Harness): (string | undefined)[] {
-  return h.calls.filter((c) => c.path === '/user/balance').map((c) => c.apiKey)
-}
-
-function deleteSession(url: string, apiKey: string | undefined, sessionId: string) {
-  return fetch(url, { method: 'DELETE', headers: headers(apiKey, sessionId) })
-}
-
-function assertNoSecretsLogged(h: Harness, sessionIds: string[]) {
-  const all = h.logs.join('\n')
-  for (const secret of [KEY_A, KEY_B, SERVER_KEY, GARBAGE_KEY, ...sessionIds]) {
-    assert.ok(!all.includes(secret), 'logs must not contain API keys or session IDs')
-  }
-}
-
+// The first `/user/balance` call of each new session is the admission credential check.
 describe('HTTP transport session binding', () => {
   it('lets the owner reuse its session with its own account key', async (t) => {
     const h = await setup(t)
@@ -167,7 +28,7 @@ describe('HTTP transport session binding', () => {
     assert.equal(first.status, 200)
     assert.match(balanceText(first), /Total:\s+\$10\.00/)
     assert.match(balanceText(second), /Total:\s+\$10\.00/)
-    assert.deepEqual(balanceCalls(h), [KEY_A, KEY_A])
+    assert.deepEqual(balanceCalls(h), [KEY_A, KEY_A, KEY_A])
     assertNoSecretsLogged(h, [sid])
   })
 
@@ -176,17 +37,17 @@ describe('HTTP transport session binding', () => {
     const sid = await openSession(h.mcpUrl, KEY_A)
     const lastActivity = h.app.sessions.get(sid)!.lastActivity
 
-    h.clock.now += 60_000
+    h.clock.now += 30_000
     const attack = await getBalance(h.mcpUrl, KEY_B, sid)
 
     assert.equal(attack.status, 400)
     assert.equal(attack.body?.result, undefined)
-    assert.deepEqual(balanceCalls(h), [])
+    assert.deepEqual(balanceCalls(h), [KEY_A])
     assert.equal(h.app.sessions.get(sid)?.lastActivity, lastActivity)
 
     const owner = await getBalance(h.mcpUrl, KEY_A, sid)
     assert.match(balanceText(owner), /Total:\s+\$10\.00/)
-    assert.deepEqual(balanceCalls(h), [KEY_A])
+    assert.deepEqual(balanceCalls(h), [KEY_A, KEY_A])
     assertNoSecretsLogged(h, [sid])
   })
 
@@ -197,19 +58,14 @@ describe('HTTP transport session binding', () => {
     const garbage = await getBalance(h.mcpUrl, GARBAGE_KEY, sid)
     assert.equal(garbage.status, 400)
 
-    const reinit = await rpc(h.mcpUrl, KEY_B, sid, 'initialize', {
-      protocolVersion: PROTOCOL_VERSION,
-      capabilities: {},
-      clientInfo: { name: 'other', version: '1.0.0' }
-    })
+    const reinit = await initialize(h.mcpUrl, KEY_B, { extraHeaders: { 'mcp-session-id': sid } })
     assert.equal(reinit.status, 200)
     assert.ok(reinit.sessionId)
     assert.notEqual(reinit.sessionId, sid)
 
-    assert.deepEqual(balanceCalls(h), [])
     assert.match(balanceText(await getBalance(h.mcpUrl, KEY_A, sid)), /Total:\s+\$10\.00/)
     assert.match(balanceText(await getBalance(h.mcpUrl, KEY_B, reinit.sessionId)), /Total:\s+\$20\.00/)
-    assert.deepEqual(balanceCalls(h), [KEY_A, KEY_B])
+    assert.deepEqual(balanceCalls(h), [KEY_A, KEY_B, KEY_A, KEY_B])
     assertNoSecretsLogged(h, [sid, reinit.sessionId])
   })
 
@@ -227,7 +83,7 @@ describe('HTTP transport session binding', () => {
     assert.equal(get.status, 401)
     assert.equal(del.status, 401)
     assert.ok(h.app.sessions.has(sid))
-    assert.deepEqual(balanceCalls(h), [])
+    assert.deepEqual(balanceCalls(h), [KEY_A])
   })
 
   it('does not let the server fallback key operate a session opened with a caller key', async (t) => {
@@ -237,7 +93,7 @@ describe('HTTP transport session binding', () => {
     assert.equal((await getBalance(h.mcpUrl, undefined, sid)).status, 400)
     assert.equal((await deleteSession(h.mcpUrl, undefined, sid)).status, 400)
     assert.ok(h.app.sessions.has(sid))
-    assert.deepEqual(balanceCalls(h), [])
+    assert.deepEqual(balanceCalls(h), [KEY_A])
   })
 
   it('preserves the server-key fallback without letting a caller key take it over', async (t) => {
@@ -246,7 +102,7 @@ describe('HTTP transport session binding', () => {
 
     assert.match(balanceText(await getBalance(h.mcpUrl, undefined, sid)), /Total:\s+\$30\.00/)
     assert.equal((await getBalance(h.mcpUrl, KEY_A, sid)).status, 400)
-    assert.deepEqual(balanceCalls(h), [SERVER_KEY])
+    assert.deepEqual(balanceCalls(h), [SERVER_KEY, SERVER_KEY])
     assertNoSecretsLogged(h, [sid])
   })
 
@@ -261,7 +117,7 @@ describe('HTTP transport session binding', () => {
     })
 
     const lastActivity = h.app.sessions.get(sid)!.lastActivity
-    h.clock.now += 60_000
+    h.clock.now += 30_000
 
     for (const key of [KEY_B, GARBAGE_KEY]) {
       const res = await fetch(h.mcpUrl, { headers: streamHeaders(key) })
@@ -301,7 +157,7 @@ describe('HTTP transport session binding', () => {
     h.clock.now += 1_001
     assert.equal((await getBalance(h.mcpUrl, KEY_A, sid)).status, 400)
     assert.equal(h.app.sessions.has(sid), false)
-    assert.deepEqual(balanceCalls(h), [])
+    assert.deepEqual(balanceCalls(h), [KEY_A])
   })
 
   it('expires active sessions after the absolute lifetime', async (t) => {
