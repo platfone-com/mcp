@@ -9,6 +9,7 @@
 - Session creation is rate limited per client address (30/min) and capped at 20 active sessions per API key; established-session traffic is not affected. Optional `MCP_CLIENT_IP_HEADER` selects a trusted proxy header for the client address.
 - Sessions are closed when the Platfone API rejects their key during a tool call (e.g. revoked key), and interrupted initializations release their slot.
 - Optional Prometheus metrics (`MCP_METRICS_PORT`): admissions by result, credential checks, active/pending sessions and session cleanup by reason.
+- **Security (dependencies):** upgraded `@modelcontextprotocol/sdk` to 1.32.1 and `express` to 4.22.3 (dev: `tsx` 4.23); the lockfile now resolves patched `fast-uri` 3.1.8, `ip-address` 10.7.4, `hono` 4.13.13, `@hono/node-server` 2.1.5, `qs` 6.16.1, `proxy-addr` 2.0.8, `body-parser` 1.20.8 and `esbuild` 0.28. `npm audit` reports no vulnerabilities.
 
 ## 1.1.0 — 2026-04-03
 
