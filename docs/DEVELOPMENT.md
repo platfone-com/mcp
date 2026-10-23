@@ -88,6 +88,21 @@ npm run start:http
 
 HTTP endpoint: `http://localhost:3000/mcp` by default. Can be changed via `--port` flag.
 
+### Docker
+
+Both the build and production stages use Node.js 24.22.1 on Alpine Linux. The production container runs as the non-root `node` user and defaults to stdio transport.
+
+```bash
+docker build -t platfone-mcp .
+
+# stdio transport
+docker run --rm -i --env-file .env platfone-mcp
+
+# HTTP transport
+docker run --rm -p 3000:3000 --env-file .env platfone-mcp \
+  node dist/index.js --transport=http
+```
+
 
 ---
 

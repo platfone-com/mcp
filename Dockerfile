@@ -1,5 +1,5 @@
 # ── Build stage ─────────────────────────────────────────────────────────
-FROM node:22-slim AS build
+FROM node:24.22.1-alpine AS build
 
 WORKDIR /app
 
@@ -11,7 +11,7 @@ COPY src/ src/
 RUN npm run build
 
 # ── Production stage ───────────────────────────────────────────────────
-FROM node:22-slim
+FROM node:24.22.1-alpine
 
 LABEL org.opencontainers.image.source="https://github.com/platfone-com/mcp"
 LABEL org.opencontainers.image.description="Platfone MCP server for SMS Activation"

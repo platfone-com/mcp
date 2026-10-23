@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.1.10 — 2026-10-23
+
+- Updated both Docker build and production stages to Node.js 24.22.1 on Alpine Linux, retaining the non-root runtime and default stdio transport.
+- Documented Docker build and run commands for stdio and HTTP transports.
+
 ## 1.1.9 — 2026-10-15
 
 - **Security:** HTTP sessions are now bound to the credential that initialized them. `POST`, `GET` and `DELETE` on `/mcp` require the same `x-api-key` (or the same server-key fallback); missing credentials return `401`, and mismatched credentials are handled as an unknown session without affecting the owner's session.
