@@ -3,7 +3,7 @@
 [![npm version](https://img.shields.io/npm/v/@platfone/mcp)](https://www.npmjs.com/package/@platfone/mcp)
 [![npm downloads](https://img.shields.io/npm/dw/@platfone/mcp)](https://www.npmjs.com/package/@platfone/mcp)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Smithery](https://smithery.ai/badge/dima-p0g6/platfone)](https://smithery.ai/server/dima-p0g6/platfone)
+[![LightNow capabilities](https://lightnow.ai/badge/io.github.platfone-com/platfone)](https://lightnow.ai/servers/io.github.platfone-com/platfone)
 
 [Platfone](https://platfone.com) provides virtual phone numbers for account verification, testing, and automation workflows. The Platfone MCP server enables AI agents to obtain temporary numbers and receive SMS messages from MCP-compatible clients like Claude, VS Code Copilot, Codex, etc.
 
